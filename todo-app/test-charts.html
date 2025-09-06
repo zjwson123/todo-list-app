@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图表系统测试 - Todo App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/charts.css">
+    <style>
+        body {
+            padding: 2rem;
+            background: var(--bg-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 1rem 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .test-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .test-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .test-btn:active {
+            transform: translateY(0);
+        }
+
+        .test-btn.secondary {
+            background: var(--text-secondary);
+        }
+
+        .test-btn.secondary:hover {
+            background: var(--text-primary);
+        }
+
+        .status-panel {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .status-info {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0.25rem 0;
+        }
+
+        .status-info.success {
+            color: var(--success-color);
+        }
+
+        .status-info.error {
+            color: var(--error-color);
+        }
+
+        .charts-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 1.5rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        /* 特定图表容器样式 */
+        #trend-chart {
+            min-height: 320px;
+        }
+
+        #completion-bars {
+            min-height: 380px;
+        }
+
+        #heatmap-chart {
+            min-height: 300px;
+        }
+
+        #progress-pie {
+            min-height: 420px;
+        }
+
+        #insight-cards {
+            min-height: 220px;
+        }
+
+        .single-chart {
+            max-width: 800px;
+            margin: 0 auto 2rem auto;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1 class="page-title">📊 图表系统测试</h1>
+        <p class="page-subtitle">测试图表可视化系统的各种功能</p>
+    </div>
+
+    <div class="test-controls">
+        <button class="test-btn" onclick="initializeCharts()">初始化图表</button>
+        <button class="test-btn" onclick="updateChartsWithRandomData()">更新随机数据</button>
+        <button class="test-btn" onclick="updateChartsWithRealData()">加载真实数据</button>
+        <button class="test-btn secondary" onclick="exportAllCharts()">导出所有图表</button>
+        <button class="test-btn secondary" onclick="destroyAllCharts()">清空图表</button>
+    </div>
+
+    <div class="status-panel">
+        <h3 class="status-title">系统状态</h3>
+        <div id="status-content">
+            <p class="status-info">等待初始化...</p>
+        </div>
+    </div>
+
+    <div class="charts-section">
+        <h2 class="section-title">效率趋势与洞察卡片</h2>
+        
+        <div class="single-chart">
+            <div id="trend-chart" class="chart-container"></div>
+        </div>
+
+        <div class="single-chart">
+            <div id="insight-cards" class="chart-container"></div>
+        </div>
+    </div>
+
+    <div class="charts-section">
+        <h2 class="section-title">完成情况与工作时段分析</h2>
+        
+        <div class="chart-row">
+            <div id="completion-bars" class="chart-container"></div>
+            <div id="heatmap-chart" class="chart-container"></div>
+        </div>
+    </div>
+
+    <div class="charts-section">
+        <h2 class="section-title">任务分类分布</h2>
+        
+        <div class="single-chart">
+            <div id="progress-pie" class="chart-container"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { ChartManager } from './js/chartManager.js';
+        import { AnalyticsEngine } from './js/analytics.js';
+
+        // 全局变量
+        window.chartManager = new ChartManager();
+        window.analyticsEngine = new AnalyticsEngine();
+
+        // 状态更新函数
+        function updateStatus(message, type = 'info') {
+            const statusContent = document.getElementById('status-content');
+            const className = type === 'success' ? 'status-info success' : 
+                             type === 'error' ? 'status-info error' : 'status-info';
+            
+            statusContent.innerHTML += `<p class="${className}">${new Date().toLocaleTimeString()}: ${message}</p>`;
+            statusContent.scrollTop = statusContent.scrollHeight;
+        }
+
+        // 生成模拟数据
+        function generateMockData() {
+            const now = new Date();
+            const mockData = {
+                overview: {
+                    totalTasks: 156,
+                    completedTasks: 128,
+                    prevTotalTasks: 142,
+                    prevCompletionRate: 78.5
+                },
+                productivityTrend: {
+                    overallTrend: 'increasing',
+                    weeklyAverage: 87.3,
+                    prevWeeklyAverage: 82.1,
+                    dailyData: []
+                },
+                timePeriodAnalysis: {
+                    week: [],
+                    month: []
+                },
+                optimalWorkPeriods: {
+                    hourlyActivity: {},
+                    maxActivity: 15
+                },
+                personalizedInsights: {
+                    taskPatterns: {
+                        categories: {
+                            '工作任务': { count: 45, percentage: 35, color: '#3b82f6' },
+                            '学习任务': { count: 38, percentage: 30, color: '#10b981' },
+                            '生活任务': { count: 28, percentage: 22, color: '#f59e0b' },
+                            '其他任务': { count: 17, percentage: 13, color: '#ef4444' }
+                        }
+                    }
+                },
+                procrastinationAnalysis: {
+                    overallScore: 23.7,
+                    prevScore: 28.2
+                }
+            };
+
+            // 生成30天的生产力数据
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                
+                mockData.productivityTrend.dailyData.push({
+                    date: date.toISOString(),
+                    productivity: 60 + Math.random() * 40 + Math.sin(i / 7 * Math.PI) * 10,
+                    tasksCompleted: Math.floor(Math.random() * 8) + 2,
+                    timeSpent: Math.floor(Math.random() * 300) + 120 // 分钟
+                });
+            }
+
+            // 生成时间段分析数据
+            mockData.timePeriodAnalysis.week = [
+                { label: '本周', totalTodos: 25, completedTodos: 22, completionRate: 88, startDate: new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString() },
+                { label: '上周', totalTodos: 28, completedTodos: 21, completionRate: 75, startDate: new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString() },
+                { label: '两周前', totalTodos: 23, completedTodos: 19, completionRate: 83, startDate: new Date(now - 21 * 24 * 60 * 60 * 1000).toISOString() }
+            ];
+
+            mockData.timePeriodAnalysis.month = [
+                { label: '本月', totalTodos: 95, completedTodos: 78, completionRate: 82, startDate: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() },
+                { label: '上月', totalTodos: 87, completedTodos: 72, completionRate: 83, startDate: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString() },
+                { label: '两月前', totalTodos: 92, completedTodos: 69, completionRate: 75, startDate: new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString() }
+            ];
+
+            // 格式化时间段数据为图表所需格式
+            const formattedTimePeriod = [
+                { period: '周', data: mockData.timePeriodAnalysis.week.map(item => ({ 
+                    total: item.totalTodos, 
+                    completed: item.completedTodos,
+                    label: item.label
+                }))},
+                { period: '月', data: mockData.timePeriodAnalysis.month.map(item => ({ 
+                    total: item.totalTodos, 
+                    completed: item.completedTodos,
+                    label: item.label
+                }))}
+            ];
+
+            mockData.timePeriodAnalysis = formattedTimePeriod;
+
+            // 生成热力图数据
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            for (let day = 0; day < 7; day++) {
+                for (let hour = 0; hour < 24; hour++) {
+                    const key = `${days[day]}_${hour}`;
+                    const baseActivity = hour >= 9 && hour <= 17 ? Math.random() * 10 + 5 : Math.random() * 3;
+                    const weekdayBonus = day < 5 ? 1.5 : 0.8;
+                    mockData.optimalWorkPeriods.hourlyActivity[key] = Math.floor(baseActivity * weekdayBonus);
+                }
+            }
+
+            return mockData;
+        }
+
+        // 从localStorage获取真实Todo数据并分析
+        async function getRealAnalysisData() {
+            try {
+                const todosJson = localStorage.getItem('todos');
+                if (!todosJson) {
+                    throw new Error('没有找到Todo数据');
+                }
+
+                const todos = JSON.parse(todosJson);
+                if (!Array.isArray(todos) || todos.length === 0) {
+                    throw new Error('Todo数据为空或格式不正确');
+                }
+
+                updateStatus(`找到 ${todos.length} 个Todo项，开始分析...`);
+                
+                const analysisData = window.analyticsEngine.generateAnalysisReport(todos, {
+                    includePeriods: ['day', 'week', 'month'],
+                    periodCount: 30,
+                    includeInsights: true,
+                    includeRecommendations: false
+                });
+
+                updateStatus('真实数据分析完成', 'success');
+                return analysisData;
+            } catch (error) {
+                updateStatus(`加载真实数据失败: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // 全局函数定义
+        window.initializeCharts = async function() {
+            try {
+                updateStatus('开始初始化图表系统...');
+                
+                const mockData = generateMockData();
+                window.chartManager.initializeCharts(mockData);
+                
+                updateStatus('图表系统初始化完成', 'success');
+                updateStatus(`创建了 ${window.chartManager.getChartIds().length} 个图表`);
+            } catch (error) {
+                updateStatus(`初始化失败: ${error.message}`, 'error');
+            }
+        };
+
+        window.updateChartsWithRandomData = function() {
+            try {
+                updateStatus('生成随机数据并更新图表...');
+                
+                const mockData = generateMockData();
+                window.chartManager.updateAllCharts(mockData);
+                
+                updateStatus('随机数据更新完成', 'success');
+            } catch (error) {
+                updateStatus(`更新失败: ${error.message}`, 'error');
+            }
+        };
+
+        window.updateChartsWithRealData = async function() {
+            try {
+                updateStatus('开始加载真实数据...');
+                
+                const realData = await getRealAnalysisData();
+                if (realData) {
+                    window.chartManager.updateAllCharts(realData);
+                    updateStatus('真实数据加载完成', 'success');
+                } else {
+                    // 如果没有真实数据，使用模拟数据
+                    updateStatus('使用模拟数据替代...');
+                    const mockData = generateMockData();
+                    window.chartManager.updateAllCharts(mockData);
+                    updateStatus('模拟数据加载完成', 'success');
+                }
+            } catch (error) {
+                updateStatus(`加载真实数据失败: ${error.message}`, 'error');
+            }
+        };
+
+        window.exportAllCharts = async function() {
+            try {
+                updateStatus('开始导出所有图表...');
+                
+                const chartIds = window.chartManager.getChartIds();
+                let exportCount = 0;
+
+                for (const chartId of chartIds) {
+                    try {
+                        const dataUrl = await window.chartManager.exportChart(chartId, 'png', 0.9);
+                        if (dataUrl) {
+                            // 创建下载链接
+                            const link = document.createElement('a');
+                            link.download = `${chartId}-${Date.now()}.png`;
+                            link.href = dataUrl;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            exportCount++;
+                        }
+                    } catch (error) {
+                        updateStatus(`导出图表 ${chartId} 失败: ${error.message}`, 'error');
+                    }
+                }
+
+                updateStatus(`成功导出 ${exportCount} 个图表`, 'success');
+            } catch (error) {
+                updateStatus(`导出失败: ${error.message}`, 'error');
+            }
+        };
+
+        window.destroyAllCharts = function() {
+            try {
+                updateStatus('销毁所有图表...');
+                
+                window.chartManager.destroyAllCharts();
+                
+                updateStatus('所有图表已销毁', 'success');
+            } catch (error) {
+                updateStatus(`销毁图表失败: ${error.message}`, 'error');
+            }
+        };
+
+        // 页面加载完成后自动初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('页面加载完成，图表系统就绪');
+            updateStatus('点击"初始化图表"按钮开始测试');
+        });
+    </script>
+</body>
+</html>

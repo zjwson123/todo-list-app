@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据验证功能测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #374151;
+        }
+        
+        .test-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+        
+        input, textarea {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #4338ca;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+        
+        .error {
+            color: #ef4444;
+        }
+        
+        .success {
+            color: #10b981;
+        }
+        
+        .warning {
+            color: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <h1>数据验证功能测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 基本字段验证</h2>
+        <form class="test-form" id="basicForm">
+            <div class="input-group">
+                <label for="basicTitle">任务标题（必填，1-200字符）</label>
+                <input type="text" id="basicTitle" maxlength="200" placeholder="输入任务标题...">
+            </div>
+            
+            <div class="input-group">
+                <label for="basicDesc">任务描述（可选，最大1000字符）</label>
+                <textarea id="basicDesc" rows="3" maxlength="1000" placeholder="输入任务描述..."></textarea>
+            </div>
+            
+            <button type="submit">测试基本验证</button>
+        </form>
+        
+        <div class="results" id="basicResults" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. XSS安全验证</h2>
+        <form class="test-form" id="xssForm">
+            <div class="input-group">
+                <label for="xssTitle">标题（测试XSS检测）</label>
+                <input type="text" id="xssTitle" placeholder="尝试输入 <script>alert('test')</script>">
+            </div>
+            
+            <div class="input-group">
+                <label for="xssDesc">描述（测试XSS检测）</label>
+                <textarea id="xssDesc" rows="3" placeholder="尝试输入恶意脚本..."></textarea>
+            </div>
+            
+            <button type="submit">测试XSS验证</button>
+        </form>
+        
+        <div class="results" id="xssResults" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 批量数据验证</h2>
+        <div>
+            <p>上传测试JSON文件或使用预设数据：</p>
+            <input type="file" id="testFile" accept=".json">
+            <button onclick="testWithSampleData()">使用预设测试数据</button>
+        </div>
+        
+        <div class="results" id="batchResults" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        // 导入验证模块
+        import { 
+            TodoValidator, 
+            DataIntegrityChecker, 
+            ErrorHandler,
+            SecuritySanitizer
+        } from './js/validator.js';
+        
+        import { 
+            messageDisplay, 
+            FormValidationFeedback, 
+            CharacterCounter 
+        } from './js/uiFeedback.js';
+
+        // 初始化字符计数器
+        const titleInput = document.getElementById('basicTitle');
+        const descInput = document.getElementById('basicDesc');
+        
+        if (titleInput) {
+            new CharacterCounter(titleInput, 200, {
+                showRemaining: true,
+                warningThreshold: 0.8,
+                errorThreshold: 0.95
+            });
+        }
+        
+        if (descInput) {
+            new CharacterCounter(descInput, 1000, {
+                showRemaining: true,
+                warningThreshold: 0.8,
+                errorThreshold: 0.95
+            });
+        }
+
+        // 基本验证测试
+        document.getElementById('basicForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('basicTitle').value.trim();
+            const description = document.getElementById('basicDesc').value.trim();
+            
+            const todoData = {
+                id: 'test-' + Date.now(),
+                title,
+                description,
+                completed: false,
+                createTime: new Date().toISOString()
+            };
+            
+            const errors = TodoValidator.validate(todoData);
+            const resultsDiv = document.getElementById('basicResults');
+            resultsDiv.style.display = 'block';
+            
+            if (errors.length === 0) {
+                resultsDiv.innerHTML = '<div class="success">✓ 验证通过！数据格式正确。</div>';
+                
+                // 显示预处理后的数据
+                const processed = TodoValidator.preprocess(todoData);
+                resultsDiv.innerHTML += '<br><strong>预处理后的数据：</strong><br><pre>' + 
+                    JSON.stringify(processed, null, 2) + '</pre>';
+            } else {
+                const errorSummary = ErrorHandler.generateErrorSummary(errors);
+                resultsDiv.innerHTML = '<div class="error">✗ 发现 ' + errors.length + ' 个错误：</div>';
+                errors.forEach(error => {
+                    resultsDiv.innerHTML += '<div class="error">• ' + error.message + '</div>';
+                });
+            }
+        });
+
+        // XSS验证测试
+        document.getElementById('xssForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('xssTitle').value;
+            const description = document.getElementById('xssDesc').value;
+            
+            const resultsDiv = document.getElementById('xssResults');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '';
+            
+            // 测试XSS检测
+            const titleXSS = SecuritySanitizer.detectXSS(title);
+            const descXSS = SecuritySanitizer.detectXSS(description);
+            
+            resultsDiv.innerHTML += '<strong>XSS检测结果：</strong><br>';
+            resultsDiv.innerHTML += '标题检测：' + (titleXSS ? 
+                '<span class="error">发现XSS威胁</span>' : 
+                '<span class="success">安全</span>') + '<br>';
+            resultsDiv.innerHTML += '描述检测：' + (descXSS ? 
+                '<span class="error">发现XSS威胁</span>' : 
+                '<span class="success">安全</span>') + '<br><br>';
+            
+            // 显示清理后的内容
+            const cleanTitle = SecuritySanitizer.sanitizeText(title);
+            const cleanDesc = SecuritySanitizer.sanitizeText(description);
+            
+            resultsDiv.innerHTML += '<strong>清理后的内容：</strong><br>';
+            resultsDiv.innerHTML += '标题：<code>' + cleanTitle + '</code><br>';
+            resultsDiv.innerHTML += '描述：<code>' + cleanDesc + '</code>';
+        });
+
+        // 批量数据测试
+        window.testWithSampleData = function() {
+            const sampleData = [
+                {
+                    id: 'valid-1',
+                    title: '正常任务1',
+                    description: '这是一个正常的任务',
+                    completed: false,
+                    createTime: new Date().toISOString()
+                },
+                {
+                    id: 'invalid-1',
+                    title: '',  // 空标题
+                    description: '无效任务',
+                    completed: false,
+                    createTime: new Date().toISOString()
+                },
+                {
+                    id: 'xss-1',
+                    title: '<script>alert("XSS")</script>恶意任务',
+                    description: 'javascript:alert("XSS")',
+                    completed: false,
+                    createTime: new Date().toISOString()
+                },
+                {
+                    // 缺少必要字段
+                    title: '缺少ID的任务',
+                    completed: false
+                },
+                {
+                    id: 'long-1',
+                    title: 'x'.repeat(250), // 超长标题
+                    description: '超长标题测试',
+                    completed: false,
+                    createTime: new Date().toISOString()
+                }
+            ];
+            
+            testBatchData(sampleData);
+        };
+        
+        function testBatchData(data) {
+            const validationResult = DataIntegrityChecker.validateBatch(data);
+            const resultsDiv = document.getElementById('batchResults');
+            resultsDiv.style.display = 'block';
+            
+            resultsDiv.innerHTML = `
+                <strong>批量验证结果：</strong><br>
+                总数量：${validationResult.totalCount}<br>
+                有效数量：${validationResult.validCount}<br>
+                错误数量：${validationResult.errors.length}<br><br>
+            `;
+            
+            if (validationResult.errors.length > 0) {
+                resultsDiv.innerHTML += '<strong>发现的错误：</strong><br>';
+                validationResult.errors.forEach(error => {
+                    resultsDiv.innerHTML += '<div class="error">• ' + error.message + '</div>';
+                });
+                
+                // 显示清理后的数据
+                const cleanedData = DataIntegrityChecker.cleanData(data);
+                resultsDiv.innerHTML += '<br><strong>清理后的数据：</strong><br>';
+                resultsDiv.innerHTML += '<pre>' + JSON.stringify(cleanedData, null, 2) + '</pre>';
+            } else {
+                resultsDiv.innerHTML += '<div class="success">所有数据都通过验证！</div>';
+            }
+        }
+        
+        // 文件上传测试
+        document.getElementById('testFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (Array.isArray(data)) {
+                        testBatchData(data);
+                    } else if (data.todos && Array.isArray(data.todos)) {
+                        testBatchData(data.todos);
+                    } else {
+                        document.getElementById('batchResults').innerHTML = 
+                            '<div class="error">文件格式错误，需要数组或包含todos数组的对象</div>';
+                        document.getElementById('batchResults').style.display = 'block';
+                    }
+                } catch (error) {
+                    document.getElementById('batchResults').innerHTML = 
+                        '<div class="error">JSON解析失败：' + error.message + '</div>';
+                    document.getElementById('batchResults').style.display = 'block';
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        // 显示功能加载成功消息
+        messageDisplay.success('数据验证功能测试页面加载完成！', {
+            title: '测试环境就绪',
+            duration: 3000
+        });
+    </script>
+</body>
+</html>

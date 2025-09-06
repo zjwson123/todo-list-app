@@ -1,0 +1,23 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "description": "极简待办事项应用 - 纯HTML+JS+CSS",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "todo",
+    "vanilla-js",
+    "html",
+    "css",
+    "javascript"
+  ],
+  "author": "",
+  "license": "MIT"
+}
