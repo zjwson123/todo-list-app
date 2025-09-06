@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="极简待办事项应用">
+    <title>Todo List - 极简待办清单</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <h1>Todo List</h1>
+            <p class="subtitle">管理你的日常任务</p>
+            
+            <!-- 导航栏 -->
+            <nav class="app-navigation">
+                <button class="nav-link active" data-route="home">
+                    <span class="nav-icon">📝</span>
+                    <span>主页</span>
+                </button>
+                <button class="nav-link" data-route="analytics">
+                    <span class="nav-icon">📊</span>
+                    <span>统计</span>
+                </button>
+                <button class="nav-link" data-route="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>设置</span>
+                </button>
+            </nav>
+        </header>
+
+        <!-- 页面容器 -->
+        <div id="page-container">
+            <!-- 主页页面 -->
+            <div id="home-page" class="page" style="display: block;">
+                <main class="todo-main">
+            <section class="add-todo-section">
+                <form class="add-todo-form" id="addTodoForm">
+                    <div class="input-group">
+                        <div class="input-fields">
+                            <input 
+                                type="text" 
+                                id="todoInput" 
+                                class="todo-input" 
+                                placeholder="输入任务标题..." 
+                                maxlength="200"
+                                required
+                            >
+                            <textarea 
+                                id="todoDescription" 
+                                class="todo-description-input" 
+                                placeholder="任务描述（可选）..." 
+                                maxlength="500"
+                                rows="2"
+                                style="display: none;"
+                            ></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="toggle-description-btn" id="toggleDescriptionBtn" title="添加描述">
+                                <span class="description-icon">📝</span>
+                            </button>
+                            <button type="submit" class="add-btn">
+                                <span class="add-icon">+</span>
+                                <span class="add-text">添加</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <section class="todo-list-section">
+                <div class="list-header">
+                    <div class="filter-tabs">
+                        <button class="filter-btn active" data-filter="all">
+                            全部 <span class="count" id="allCount">0</span>
+                        </button>
+                        <button class="filter-btn" data-filter="active">
+                            待完成 <span class="count" id="activeCount">0</span>
+                        </button>
+                        <button class="filter-btn" data-filter="completed">
+                            已完成 <span class="count" id="completedCount">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <ul class="todo-list" id="todoList">
+                    <!-- Todo items will be rendered here -->
+                </ul>
+
+                <div class="list-footer" id="listFooter" style="display: none;">
+                    <div class="footer-info">
+                        <span class="remaining-count">
+                            剩余 <span id="remainingCount">0</span> 项任务
+                        </span>
+                    </div>
+                    <div class="footer-actions">
+                        <button class="clear-completed-btn" id="clearCompletedBtn">
+                            清除已完成
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="empty-state" id="emptyState">
+                <div class="empty-icon">📝</div>
+                <h3>还没有任务</h3>
+                <p>添加你的第一个任务开始管理待办事项</p>
+            </section>
+                </main>
+            </div>
+
+            <!-- 统计分析页面 -->
+            <div id="analytics-page" class="page" style="display: none;">
+                <main class="analytics-main">
+                    <div class="analytics-header">
+                        <h2>数据分析</h2>
+                        <p class="page-description">深入了解您的任务完成模式和工作效率</p>
+                    </div>
+
+                    <div class="analytics-content">
+                        <!-- 概览卡片 -->
+                        <div class="analytics-overview">
+                            <div class="stat-card" id="totalTasksCard">
+                                <div class="stat-icon">📋</div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="totalTasksCount">0</div>
+                                    <div class="stat-label">总任务数</div>
+                                </div>
+                            </div>
+                            <div class="stat-card" id="completionRateCard">
+                                <div class="stat-icon">✅</div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="completionRate">0%</div>
+                                    <div class="stat-label">完成率</div>
+                                </div>
+                            </div>
+                            <div class="stat-card" id="procrastinationCard">
+                                <div class="stat-icon">⏰</div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="procrastinationLevel">低</div>
+                                    <div class="stat-label">拖延程度</div>
+                                </div>
+                            </div>
+                            <div class="stat-card" id="productivityCard">
+                                <div class="stat-icon">🚀</div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="productivityScore">0</div>
+                                    <div class="stat-label">效率评分</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 图表区域 -->
+                        <div class="charts-section">
+                            <div class="chart-container">
+                                <h3>完成趋势</h3>
+                                <canvas id="trendChart" width="800" height="300"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h3>每日完成情况</h3>
+                                <canvas id="completionChart" width="800" height="300"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h3>工作时段分布</h3>
+                                <canvas id="heatmapChart" width="800" height="400"></canvas>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <h3>任务类型分析</h3>
+                                <canvas id="categoryChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- 洞察建议 -->
+                        <div class="insights-section">
+                            <h3>个性化洞察</h3>
+                            <div id="insightsList" class="insights-list">
+                                <!-- 洞察卡片将动态生成 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 数据导出 -->
+                        <div class="export-section">
+                            <h3>数据导出</h3>
+                            <div class="export-buttons">
+                                <button class="export-btn" id="exportJsonBtn">导出JSON</button>
+                                <button class="export-btn" id="exportCsvBtn">导出CSV</button>
+                                <button class="export-btn" id="exportReportBtn">导出分析报告</button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 设置页面 -->
+            <div id="settings-page" class="page" style="display: none;">
+                <main class="settings-main">
+                    <div class="settings-header">
+                        <h2>应用设置</h2>
+                        <p class="settings-subtitle">个性化你的Todo应用</p>
+                    </div>
+
+                    <div class="settings-content">
+                        <!-- 主题设置 -->
+                        <section class="settings-section">
+                            <h3>外观设置</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">主题模式</label>
+                                    <span class="setting-desc">切换亮色/暗色主题</span>
+                                </div>
+                                <button class="setting-btn" id="theme-toggle">
+                                    <span class="setting-icon">🌙</span>
+                                    <span>切换到暗色模式</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- 数据管理 -->
+                        <section class="settings-section">
+                            <h3>数据管理</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">导出数据</label>
+                                    <span class="setting-desc">将你的任务数据导出为JSON文件</span>
+                                </div>
+                                <button class="setting-btn" id="export-data">
+                                    <span class="setting-icon">📥</span>
+                                    <span>导出</span>
+                                </button>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label class="setting-label">导入数据</label>
+                                    <span class="setting-desc">从备份文件恢复你的任务</span>
+                                </div>
+                                <button class="setting-btn" id="import-data">
+                                    <span class="setting-icon">📤</span>
+                                    <span>导入</span>
+                                </button>
+                                <input type="file" id="import-file" accept=".json" style="display: none;">
+                            </div>
+                            <div class="setting-item setting-item-danger">
+                                <div class="setting-info">
+                                    <label class="setting-label">清除所有数据</label>
+                                    <span class="setting-desc">删除所有任务和设置数据</span>
+                                </div>
+                                <button class="setting-btn setting-btn-danger" id="clear-all-data">
+                                    <span class="setting-icon">🗑️</span>
+                                    <span>清除</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- 应用信息 -->
+                        <section class="settings-section">
+                            <h3>应用信息</h3>
+                            <div class="app-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">总任务数</span>
+                                    <span class="stat-value" id="total-tasks">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">已完成</span>
+                                    <span class="stat-value" id="completed-tasks">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">待完成</span>
+                                    <span class="stat-value" id="active-tasks">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">数据大小</span>
+                                    <span class="stat-value" id="data-size">0 KB</span>
+                                </div>
+                            </div>
+                            
+                            <div class="app-info">
+                                <p><strong>Todo List</strong> v1.0</p>
+                                <p>纯JavaScript实现的轻量级待办事项应用</p>
+                                <p>数据安全存储在您的本地浏览器中</p>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 消息提示 -->
+                    <div id="settings-message" class="settings-message" style="display: none;"></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript modules -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

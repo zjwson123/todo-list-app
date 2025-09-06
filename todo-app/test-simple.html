@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简化数据迁移测试</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .result {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #a6d2ff; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .json-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Todo App 版本管理系统测试</h1>
+    
+    <div class="test-section">
+        <h2>当前系统状态</h2>
+        <button onclick="checkCurrentState()">检查当前状态</button>
+        <div id="currentStateResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试1: 新用户场景</h2>
+        <p>清除所有数据，模拟新用户首次使用</p>
+        <button onclick="testNewUser()">测试新用户</button>
+        <div id="newUserResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试2: 数据迁移场景</h2>
+        <p>创建旧格式数据并测试迁移</p>
+        <button onclick="testDataMigration()">测试数据迁移</button>
+        <div id="migrationResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试3: 数据完整性验证</h2>
+        <p>测试边界情况和数据验证</p>
+        <button onclick="testDataIntegrity()">测试数据完整性</button>
+        <div id="integrityResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>工具</h2>
+        <button onclick="clearAll()">清除所有数据</button>
+        <button onclick="showStorage()">显示存储内容</button>
+    </div>
+
+    <script type="module">
+        import { versionManager, CURRENT_VERSION } from './js/dataVersion.js';
+        import { migrationManager } from './js/migration.js';
+
+        // 使脚本和对象在全局可用
+        window.versionManager = versionManager;
+        window.migrationManager = migrationManager;
+        window.CURRENT_VERSION = CURRENT_VERSION;
+
+        function showResult(containerId, type, message, data = null) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            
+            let content = `${new Date().toLocaleTimeString()}: ${message}\n`;
+            if (data) {
+                content += `\n${JSON.stringify(data, null, 2)}`;
+            }
+            
+            div.textContent = content;
+            container.innerHTML = '';
+            container.appendChild(div);
+        }
+
+        // 检查当前状态
+        window.checkCurrentState = function() {
+            try {
+                const currentVersion = versionManager.getStoredVersion();
+                const needsUpgrade = versionManager.needsUpgrade();
+                const stats = migrationManager.getMigrationStats();
+                const currentData = migrationManager.loadData();
+                
+                const status = {
+                    currentVersion,
+                    targetVersion: CURRENT_VERSION,
+                    needsUpgrade,
+                    dataItemCount: currentData.length,
+                    sampleData: currentData.slice(0, 2),
+                    allStats: stats
+                };
+                
+                showResult('currentStateResult', 'info', '当前系统状态', status);
+                console.log('系统状态检查完成:', status);
+            } catch (error) {
+                showResult('currentStateResult', 'error', `状态检查失败: ${error.message}`);
+                console.error('状态检查失败:', error);
+            }
+        };
+
+        // 测试新用户场景
+        window.testNewUser = async function() {
+            try {
+                showResult('newUserResult', 'info', '正在测试新用户场景...');
+                
+                // 清除所有数据
+                localStorage.removeItem('todos');
+                localStorage.removeItem('app_data_version');
+                localStorage.removeItem('app_data_backup');
+                
+                console.log('已清除所有数据');
+                
+                // 执行迁移检查
+                const result = await migrationManager.checkAndMigrate();
+                
+                // 检查结果
+                const finalVersion = versionManager.getStoredVersion();
+                const finalData = migrationManager.loadData();
+                
+                const testResult = {
+                    migrationResult: result,
+                    finalVersion,
+                    expectedVersion: CURRENT_VERSION,
+                    isCorrectVersion: finalVersion === CURRENT_VERSION,
+                    dataCount: finalData.length,
+                    success: !result.migrated && finalVersion === CURRENT_VERSION
+                };
+                
+                const resultType = testResult.success ? 'success' : 'error';
+                const message = testResult.success ? '✅ 新用户测试成功' : '❌ 新用户测试失败';
+                
+                showResult('newUserResult', resultType, message, testResult);
+                console.log('新用户测试完成:', testResult);
+                
+            } catch (error) {
+                showResult('newUserResult', 'error', `新用户测试失败: ${error.message}`);
+                console.error('新用户测试失败:', error);
+            }
+        };
+
+        // 测试数据迁移
+        window.testDataMigration = async function() {
+            try {
+                showResult('migrationResult', 'info', '正在测试数据迁移...');
+                
+                // 创建旧格式测试数据
+                const oldData = [
+                    {
+                        id: 'test1',
+                        text: '完成项目文档',
+                        completed: false,
+                        createdAt: '2023-12-01T10:00:00.000Z'
+                        // 故意不包含 updatedAt 来测试可选字段处理
+                    },
+                    {
+                        id: 'test2',
+                        text: '代码评审',
+                        completed: true,
+                        createdAt: '2023-12-02T15:30:00.000Z',
+                        updatedAt: '2023-12-02T16:00:00.000Z'
+                    }
+                ];
+                
+                // 设置旧版本数据
+                localStorage.setItem('todos', JSON.stringify(oldData));
+                localStorage.setItem('app_data_version', '1.0');
+                
+                console.log('已设置旧格式数据:', oldData);
+                
+                // 执行迁移
+                const result = await migrationManager.checkAndMigrate();
+                
+                // 检查迁移结果
+                const migratedData = migrationManager.loadData();
+                const finalVersion = versionManager.getStoredVersion();
+                
+                // 验证迁移是否成功
+                const validationChecks = {
+                    migrationExecuted: result.migrated === true,
+                    migrationSuccessful: result.success === true,
+                    correctVersion: finalVersion === CURRENT_VERSION,
+                    correctItemCount: migratedData.length === oldData.length,
+                    hasNewFields: migratedData.every(item => 
+                        item.title !== undefined && 
+                        item.description !== undefined && 
+                        item.createTime !== undefined
+                    ),
+                    fieldsTransformed: migratedData.every(item => 
+                        item.text === undefined && 
+                        item.createdAt === undefined
+                    )
+                };
+                
+                const allChecksPass = Object.values(validationChecks).every(check => check === true);
+                
+                const testResult = {
+                    originalData: oldData,
+                    migrationResult: result,
+                    migratedData,
+                    finalVersion,
+                    validationChecks,
+                    success: allChecksPass
+                };
+                
+                const resultType = allChecksPass ? 'success' : 'error';
+                const message = allChecksPass ? '✅ 数据迁移测试成功' : '❌ 数据迁移测试失败';
+                
+                showResult('migrationResult', resultType, message, testResult);
+                console.log('数据迁移测试完成:', testResult);
+                
+            } catch (error) {
+                showResult('migrationResult', 'error', `数据迁移测试失败: ${error.message}`);
+                console.error('数据迁移测试失败:', error);
+            }
+        };
+
+        // 测试数据完整性
+        window.testDataIntegrity = async function() {
+            try {
+                showResult('integrityResult', 'info', '正在测试数据完整性...');
+                
+                // 创建包含边界情况的测试数据
+                const edgeCaseData = [
+                    {
+                        id: 'edge1',
+                        text: '',  // 空标题
+                        completed: false,
+                        createdAt: '2023-12-01T10:00:00.000Z'
+                    },
+                    {
+                        id: 'edge2',
+                        text: '正常任务',
+                        completed: true,
+                        createdAt: '2023-12-02T15:30:00.000Z',
+                        updatedAt: '2023-12-02T16:00:00.000Z'
+                    },
+                    {
+                        id: 'edge3',
+                        text: '缺少更新时间的任务',
+                        completed: false,
+                        createdAt: '2023-12-03T09:15:00.000Z'
+                        // 没有 updatedAt
+                    }
+                ];
+                
+                // 设置数据
+                localStorage.setItem('todos', JSON.stringify(edgeCaseData));
+                localStorage.setItem('app_data_version', '1.0');
+                
+                console.log('已设置边界情况数据:', edgeCaseData);
+                
+                // 执行迁移
+                const result = await migrationManager.checkAndMigrate();
+                const migratedData = migrationManager.loadData();
+                
+                // 完整性检查
+                const integrityChecks = {
+                    allItemsHaveId: migratedData.every(item => item.id && typeof item.id === 'string'),
+                    allItemsHaveTitle: migratedData.every(item => typeof item.title === 'string'),
+                    allItemsHaveDescription: migratedData.every(item => typeof item.description === 'string'),
+                    allItemsHaveCompleted: migratedData.every(item => typeof item.completed === 'boolean'),
+                    allItemsHaveCreateTime: migratedData.every(item => item.createTime && typeof item.createTime === 'string'),
+                    allItemsHaveUpdateTime: migratedData.every(item => item.updateTime && typeof item.updateTime === 'string'),
+                    correctItemCount: migratedData.length === edgeCaseData.length,
+                    emptyTitleHandled: migratedData[0].title === '', // 空标题应该保持为空字符串
+                    noOldFields: migratedData.every(item => item.text === undefined && item.createdAt === undefined)
+                };
+                
+                const allChecksPass = Object.values(integrityChecks).every(check => check === true);
+                
+                const testResult = {
+                    originalData: edgeCaseData,
+                    migrationResult: result,
+                    migratedData,
+                    integrityChecks,
+                    success: allChecksPass
+                };
+                
+                const resultType = allChecksPass ? 'success' : 'error';
+                const message = allChecksPass ? '✅ 数据完整性测试通过' : '❌ 数据完整性测试失败';
+                
+                showResult('integrityResult', resultType, message, testResult);
+                console.log('数据完整性测试完成:', testResult);
+                
+            } catch (error) {
+                showResult('integrityResult', 'error', `数据完整性测试失败: ${error.message}`);
+                console.error('数据完整性测试失败:', error);
+            }
+        };
+
+        // 工具函数
+        window.clearAll = function() {
+            localStorage.removeItem('todos');
+            localStorage.removeItem('app_data_version');
+            localStorage.removeItem('app_data_backup');
+            alert('所有数据已清除');
+            console.log('已清除所有localStorage数据');
+        };
+
+        window.showStorage = function() {
+            const storage = {
+                todos: localStorage.getItem('todos'),
+                version: localStorage.getItem('app_data_version'),
+                backup: localStorage.getItem('app_data_backup')
+            };
+            
+            console.log('当前localStorage内容:', storage);
+            
+            const container = document.querySelector('.test-section:last-child');
+            let display = container.querySelector('.json-output');
+            if (!display) {
+                display = document.createElement('div');
+                display.className = 'json-output';
+                container.appendChild(display);
+            }
+            
+            display.textContent = JSON.stringify(storage, null, 2);
+        };
+
+        // 页面加载时自动检查状态
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('页面加载完成，开始初始化...');
+            setTimeout(() => {
+                checkCurrentState();
+            }, 100);
+        });
+    </script>
+</body>
+</html>
