@@ -164,3 +164,7 @@ npm run preview
 - **架构模式**：模块化 SPA
 - **数据存储**：LocalStorage
 - **图表引擎**：自研 Canvas 渲染器
+<<<<<<< HEAD
+# 部署到GitHub Pages
+=======
+>>>>>>> origin/main
