@@ -1,6 +1,16 @@
 # Todo App - 极简待办清单
 
+[![在线演示](https://img.shields.io/badge/🚀-在线演示-28a745)](https://zjwson123.github.io/todo-list-app/)
+[![GitHub](https://img.shields.io/badge/GitHub-仓库-1f2328)](https://github.com/zjwson123/todo-list-app)
+[![MIT License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
+
 基于纯HTML+CSS+JavaScript的现代化待办事项应用，专注于拖延症治疗和工作效率提升。
+
+## 🎯 在线体验
+
+**[🚀 立即体验 Todo App](https://zjwson123.github.io/todo-list-app/)**
+
+> 支持数据本地存储，所有功能完全免费使用
 
 ## 🌟 项目特性
 
@@ -102,7 +112,6 @@ npm run build
 npm run preview
 ```
 
-<<<<<<< HEAD
 ## 📱 页面导航
 
 ### 主页 (`/` 或 `#home`)
@@ -148,7 +157,7 @@ npm run preview
 - **Safari** 12+ ✅
 - **Edge** 79+ ✅
 
-## 📈 功能截图
+## 📈 使用场景
 
 应用支持以下核心场景：
 1. **任务管理**：快速添加、编辑、完成任务
@@ -164,7 +173,8 @@ npm run preview
 - **架构模式**：模块化 SPA
 - **数据存储**：LocalStorage
 - **图表引擎**：自研 Canvas 渲染器
-<<<<<<< HEAD
-# 部署到GitHub Pages
-=======
->>>>>>> origin/main
+- **部署方式**：GitHub Pages 自动部署
+
+## 📄 许可证
+
+本项目基于 [MIT License](https://opensource.org/licenses/MIT) 开源协议。
