@@ -203,10 +203,22 @@ class PomodoroTimer {
                 font-weight: bold;
                 color: var(--text-primary);
                 font-family: 'Courier New', monospace;
+                white-space: nowrap;
+                width: max-content;
+                display: flex;
+                align-items: center;
+                gap: 2px;
+            }
+
+            .time-minutes, .time-seconds {
+                display: inline-block;
+                min-width: 32px;
+                text-align: center;
             }
 
             .time-separator {
                 animation: blink 1s infinite;
+                margin: 0 2px;
             }
 
             @keyframes blink {
