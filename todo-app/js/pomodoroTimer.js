@@ -143,8 +143,12 @@ class PomodoroTimer {
 
             .timer-title {
                 margin: 0;
-                color: var(--text-primary);
+                color: #374151;
                 font-size: 16px;
+            }
+
+            [data-theme="dark"] .timer-title {
+                color: #f3f4f6;
             }
 
             .timer-settings-btn {
@@ -166,7 +170,11 @@ class PomodoroTimer {
                 justify-content: space-between;
                 margin-bottom: var(--spacing-3);
                 font-size: 14px;
-                color: var(--text-secondary);
+                color: #6b7280;
+            }
+
+            [data-theme="dark"] .timer-session-info {
+                color: #d1d5db;
             }
 
             .session-type {
@@ -211,13 +219,17 @@ class PomodoroTimer {
                 transform: translate(-50%, -50%);
                 font-size: 24px;
                 font-weight: bold;
-                color: var(--text-primary);
+                color: #374151;
                 font-family: 'Courier New', monospace;
                 white-space: nowrap;
                 width: max-content;
                 display: flex;
                 align-items: center;
                 gap: 2px;
+            }
+
+            [data-theme="dark"] .time-text {
+                color: #f3f4f6;
             }
 
             .time-minutes, .time-seconds {
@@ -252,10 +264,14 @@ class PomodoroTimer {
                 border: 1px solid var(--border-color);
                 border-radius: var(--border-radius-sm);
                 background: var(--bg-primary);
-                color: var(--text-primary);
+                color: #374151;
                 cursor: pointer;
                 transition: all 0.2s;
                 font-size: 12px;
+            }
+
+            [data-theme="dark"] .timer-btn {
+                color: #e5e7eb;
             }
 
             .timer-btn:hover {
@@ -304,8 +320,12 @@ class PomodoroTimer {
             .stat-label {
                 display: block;
                 font-size: 12px;
-                color: var(--text-secondary);
+                color: #6b7280;
                 margin-bottom: var(--spacing-1);
+            }
+
+            [data-theme="dark"] .stat-label {
+                color: #d1d5db;
             }
 
             .stat-value {
