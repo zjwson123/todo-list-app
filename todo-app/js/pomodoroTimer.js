@@ -390,14 +390,14 @@ class PomodoroTimer {
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             }
 
-            [data-theme="light"] .timer-settings-content {
-                background: #ffffff;
-                border-color: #e2e8f0;
+            .timer-settings-content {
+                background: #ffffff !important;
+                border-color: #e2e8f0 !important;
             }
 
             [data-theme="dark"] .timer-settings-content {
-                background: #2d3748;
-                border-color: #4a5568;
+                background: #2d3748 !important;
+                border-color: #4a5568 !important;
             }
 
             .timer-settings-header {
@@ -407,6 +407,40 @@ class PomodoroTimer {
                 margin-bottom: var(--spacing-3);
             }
 
+            .timer-settings-header h3 {
+                color: #1f2937;
+                margin: 0;
+            }
+
+            [data-theme="dark"] .timer-settings-header h3 {
+                color: #ffffff;
+            }
+
+            .close-settings {
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: #6b7280;
+                cursor: pointer;
+                padding: var(--spacing-1);
+                border-radius: var(--border-radius-sm);
+                transition: background-color 0.2s, color 0.2s;
+            }
+
+            .close-settings:hover {
+                background: #f3f4f6;
+                color: #374151;
+            }
+
+            [data-theme="dark"] .close-settings {
+                color: #9ca3af;
+            }
+
+            [data-theme="dark"] .close-settings:hover {
+                background: #4b5563;
+                color: #e5e7eb;
+            }
+
             .timer-settings-group {
                 margin-bottom: var(--spacing-3);
             }
@@ -414,18 +448,29 @@ class PomodoroTimer {
             .timer-settings-group label {
                 display: block;
                 margin-bottom: var(--spacing-1);
-                color: var(--text-primary);
+                color: #374151;
                 font-weight: 500;
+            }
+
+            [data-theme="dark"] .timer-settings-group label {
+                color: #e5e7eb;
             }
 
             .timer-settings-group input,
             .timer-settings-group select {
                 width: 100%;
                 padding: var(--spacing-2);
-                border: 1px solid var(--border-color);
+                border: 1px solid #d1d5db;
                 border-radius: var(--border-radius-sm);
-                background: var(--bg-secondary);
-                color: var(--text-primary);
+                background: #ffffff;
+                color: #374151;
+            }
+
+            [data-theme="dark"] .timer-settings-group input,
+            [data-theme="dark"] .timer-settings-group select {
+                border-color: #4b5563;
+                background: #374151;
+                color: #e5e7eb;
             }
 
             .timer-settings-group input[type="checkbox"] {
