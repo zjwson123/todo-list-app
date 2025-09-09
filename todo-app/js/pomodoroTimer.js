@@ -948,6 +948,20 @@ class PomodoroTimer {
         // 创建设置弹窗
         const modal = document.createElement('div');
         modal.className = 'timer-settings-modal';
+        
+        // 确保模态框和内容有正确的背景色
+        modal.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 2000 !important;
+        `;
         modal.innerHTML = `
             <div class="timer-settings-content">
                 <div class="timer-settings-header">
@@ -1011,6 +1025,38 @@ class PomodoroTimer {
         `;
 
         document.body.appendChild(modal);
+
+        // 确保内容区域有正确的背景色
+        const content = modal.querySelector('.timer-settings-content');
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        
+        if (currentTheme === 'dark') {
+            content.style.cssText = `
+                background: #2d3748 !important;
+                border: 1px solid #4a5568 !important;
+                border-radius: var(--border-radius) !important;
+                padding: var(--spacing-4) !important;
+                max-width: 400px !important;
+                width: 90% !important;
+                max-height: 80vh !important;
+                overflow-y: auto !important;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+                color: #e5e7eb !important;
+            `;
+        } else {
+            content.style.cssText = `
+                background: #ffffff !important;
+                border: 1px solid #e2e8f0 !important;
+                border-radius: var(--border-radius) !important;
+                padding: var(--spacing-4) !important;
+                max-width: 400px !important;
+                width: 90% !important;
+                max-height: 80vh !important;
+                overflow-y: auto !important;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+                color: #374151 !important;
+            `;
+        }
 
         // 绑定事件
         modal.querySelector('.close-settings').onclick = () => modal.remove();
