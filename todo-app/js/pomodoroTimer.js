@@ -67,7 +67,7 @@ class PomodoroTimer {
                 <div class="time-circle">
                     <svg class="progress-ring" width="120" height="120">
                         <circle class="progress-ring-bg" cx="60" cy="60" r="54" 
-                                stroke="var(--border-color)" stroke-width="4" fill="transparent"/>
+                                stroke="#e0e0e0" stroke-width="4" fill="transparent"/>
                         <circle class="progress-ring-progress" cx="60" cy="60" r="54" 
                                 stroke="var(--primary-color)" stroke-width="4" fill="transparent"
                                 stroke-linecap="round" transform="rotate(-90 60 60)"/>
@@ -186,6 +186,16 @@ class PomodoroTimer {
 
             .progress-ring {
                 transform: rotate(-90deg);
+            }
+
+            .progress-ring-bg {
+                stroke: #e0e0e0;
+                opacity: 0.8;
+            }
+
+            [data-theme="dark"] .progress-ring-bg {
+                stroke: #4a5568;
+                opacity: 1;
             }
 
             .progress-ring-progress {
@@ -370,12 +380,24 @@ class PomodoroTimer {
 
             .timer-settings-content {
                 background: var(--bg-primary);
+                border: 1px solid var(--border-color);
                 border-radius: var(--border-radius);
                 padding: var(--spacing-4);
                 max-width: 400px;
                 width: 90%;
                 max-height: 80vh;
                 overflow-y: auto;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            }
+
+            [data-theme="light"] .timer-settings-content {
+                background: #ffffff;
+                border-color: #e2e8f0;
+            }
+
+            [data-theme="dark"] .timer-settings-content {
+                background: #2d3748;
+                border-color: #4a5568;
             }
 
             .timer-settings-header {
