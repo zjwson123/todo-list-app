@@ -32,6 +32,18 @@ import {
     MESSAGE_TYPES 
 } from './uiFeedback.js';
 
+// 导入键盘快捷键模块
+import { keyboardShortcutManager } from './keyboardShortcuts.js';
+
+// 导入拖拽排序模块
+import { dragSortManager } from './dragSort.js';
+
+// 导入番茄工作法计时器
+import { pomodoroTimer } from './pomodoroTimer.js';
+
+// 导入成就系统
+import { achievementSystem } from './achievementSystem.js';
+
 // 应用状态管理
 class TodoState {
     constructor() {
@@ -180,6 +192,11 @@ class TodoState {
             this.todos.unshift(processedTodo);
             this.saveTodos();
             
+            // 触发任务创建事件（成就系统）
+            document.dispatchEvent(new CustomEvent('todoCreated', { 
+                detail: processedTodo 
+            }));
+            
             // 显示成功消息
             messageDisplay.success('任务添加成功', {
                 duration: 2000,
@@ -200,8 +217,17 @@ class TodoState {
     toggleTodo(id) {
         const todo = this.todos.find(t => t.id === id);
         if (todo) {
+            const wasCompleted = todo.completed;
             todo.completed = !todo.completed;
             todo.updateTime = new Date().toISOString();
+            
+            // 如果从未完成变为完成，触发完成事件
+            if (!wasCompleted && todo.completed) {
+                document.dispatchEvent(new CustomEvent('todoCompleted', { 
+                    detail: todo 
+                }));
+            }
+            
             this.saveTodos();
         }
         return todo;
@@ -290,6 +316,39 @@ class TodoState {
             default:
                 return this.todos;
         }
+    }
+
+    // 任务排序
+    sortTodos(fromIndex, toIndex) {
+        if (fromIndex === toIndex) return;
+
+        // 获取当前过滤后的任务列表
+        const filteredTodos = this.getFilteredTodos();
+        
+        if (fromIndex < 0 || fromIndex >= filteredTodos.length ||
+            toIndex < 0 || toIndex > filteredTodos.length) {
+            console.warn('排序索引超出范围');
+            return;
+        }
+
+        // 从过滤列表中移除要移动的项目
+        const [movedItem] = filteredTodos.splice(fromIndex, 1);
+        
+        // 插入到新位置
+        filteredTodos.splice(toIndex, 0, movedItem);
+
+        // 重新构建完整的todos数组，保持其他状态的任务位置不变
+        if (this.currentFilter === 'all') {
+            // 如果是显示全部，直接使用重排后的数组
+            this.todos = filteredTodos;
+        } else {
+            // 如果是过滤状态，需要重新合并
+            const otherTodos = this.todos.filter(todo => !filteredTodos.includes(todo));
+            this.todos = [...filteredTodos, ...otherTodos];
+        }
+
+        this.saveTodos();
+        console.log(`任务排序完成: ${fromIndex} -> ${toIndex}`);
     }
 
     // 获取统计数据
@@ -449,6 +508,16 @@ class TodoApp {
             // 初始化事件监听器和渲染
             this.initializeEventListeners();
             this.renderer.render();
+            
+            // 初始化键盘快捷键系统
+            this.initializeKeyboardShortcuts();
+            
+            // 初始化拖拽排序系统
+            this.initializeDragSort();
+            
+            // 初始化番茄工作法计时器
+            this.initializePomodoroTimer();
+            
             this.initialized = true;
             
             console.log('TodoApp 初始化完成');
@@ -855,6 +924,104 @@ class TodoApp {
         }
 
         return errors;
+    }
+
+    // 初始化键盘快捷键系统
+    initializeKeyboardShortcuts() {
+        // 为键盘快捷键系统提供应用状态和方法的访问接口
+        keyboardShortcutManager.todoApp = this;
+        
+        // 注册应用专用的快捷键行为
+        keyboardShortcutManager.register('global', 'ctrl+shift+d', {
+            description: '切换暗色主题',
+            action: () => this.toggleTheme()
+        });
+
+        console.log('键盘快捷键系统初始化完成');
+    }
+
+    // 初始化拖拽排序系统
+    initializeDragSort() {
+        const todoList = document.getElementById('todoList');
+        if (!todoList) {
+            console.warn('找不到todoList容器，跳过拖拽排序初始化');
+            return;
+        }
+
+        // 启用拖拽排序
+        dragSortManager.enableDragSort(todoList, {
+            itemSelector: '.todo-item',
+            handleSelector: '.todo-content',
+            disabledSelector: '.edit-form',
+            onSort: (fromIndex, toIndex) => {
+                // 执行排序并重新渲染
+                this.state.sortTodos(fromIndex, toIndex);
+                this.renderer.render();
+                
+                // 显示反馈消息
+                messageDisplay.success('任务顺序已更新', {
+                    duration: 1500,
+                    animation: 'bounce'
+                });
+            }
+        });
+
+        console.log('拖拽排序系统初始化完成');
+    }
+
+    // 初始化番茄工作法计时器
+    initializePomodoroTimer() {
+        // 番茄计时器在构造时已经自动初始化
+        // 这里可以添加与Todo应用的集成逻辑
+        
+        // 注册番茄钟相关的快捷键
+        keyboardShortcutManager.register('global', 'ctrl+t', {
+            description: '开始/暂停番茄钟',
+            action: () => this.togglePomodoroTimer()
+        });
+
+        keyboardShortcutManager.register('global', 'ctrl+shift+t', {
+            description: '重置番茄钟',
+            action: () => this.resetPomodoroTimer()
+        });
+
+        console.log('番茄工作法计时器初始化完成');
+    }
+
+    // 切换番茄计时器状态
+    togglePomodoroTimer() {
+        if (pomodoroTimer.isRunning && !pomodoroTimer.isPaused) {
+            pomodoroTimer.pause();
+        } else {
+            pomodoroTimer.start();
+        }
+    }
+
+    // 重置番茄计时器
+    resetPomodoroTimer() {
+        pomodoroTimer.reset();
+    }
+
+    // 切换主题
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // 显示提示信息
+        messageDisplay.success(`已切换到${newTheme === 'dark' ? '暗色' : '亮色'}主题`, {
+            duration: 1500
+        });
+    }
+
+    // 提供公共接口给键盘快捷键系统使用
+    getState() {
+        return this.state;
+    }
+
+    getRenderer() {
+        return this.renderer;
     }
 
     // HTML转义（已存在但可能需要更新）
